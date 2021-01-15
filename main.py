@@ -1,3 +1,5 @@
+import sys
+import getopt
 import csv
 import os
 import shutil
@@ -6,111 +8,7 @@ import tempfile
 import openpyxl
 
 
-def read_csv(csv_path, csv_delimiter=';'):
-    csv_list_dict = []
-    with open(csv_path, 'r') as csv_reader:
-        reader = csv.reader(csv_reader, delimiter=csv_delimiter)
-        header = None
-        for row in reader:
-            row_dict = {}
-            if header is None:
-                header = row
-            else:
-                for i in range(len(header)):
-                    row_dict[header[i]] = row[i]
-                csv_list_dict.append(row_dict)
-    return csv_list_dict
-
-
-def write_csv(csv_path, csv_list_dict):
-    with open(csv_path, 'w', newline='') as csv_writer:
-        writer = csv.writer(csv_writer, delimiter=';', quoting=csv.QUOTE_MINIMAL)
-        header = csv_list_dict[0].keys()
-        writer.writerow(header)
-        for row in csv_list_dict:
-            row_list = []
-            for head in header:
-                row_list.append(row[head])
-            writer.writerow(row_list)
-
-
-def search_file(path, filename):
-    result = None
-    if os.path.isdir(path):
-        list_dir = os.listdir(path)
-        for item in list_dir:
-            if os.path.isdir(os.path.join(path, item)):
-                result = search_file(os.path.join(path, item), filename)
-                if result is not None:
-                    break
-            elif os.path.isfile(os.path.join(path, item)):
-                if item == filename:
-                    result = os.path.join(path, item)
-                    break
-    return result
-
-
-def copy_file(file_path, path):
-    if os.path.isfile(file_path):
-        file_path_copy = os.path.join(path, os.path.basename(file_path))
-        if not os.path.isfile(file_path_copy):
-            if not os.path.isdir(path):
-                os.makedirs(path)
-            shutil.copyfile(file_path, file_path_copy)
-        else:
-            print(f'Erro: Xa existe o ficheiro de destino {file_path_copy}')
-    else:
-        print(f'Erro: Non existe o ficheiro a copiar {file_path}')
-
-
-def file_to_utf8(file_path):
-    if os.path.isfile(file_path):
-        with open(file_path, 'rb') as f:
-            content_bytes = f.read()
-        detected = chardet.detect(content_bytes)
-        encoding = detected['encoding']
-        confidence = detected['confidence']
-        if confidence >= 0.8:
-            content_text = content_bytes.decode(encoding)
-            with tempfile.NamedTemporaryFile(mode='w', newline='', dir=os.path.dirname(file_path), encoding='utf-8', delete=False) as f:
-                f.write(content_text)
-            os.replace(f.name, file_path)
-            return True
-    return False
-
-
-def data_file_details(file_path):
-    details = {'encoding': '', 'confidence': 0.0, 'delimiter': '', 'header': '', 'rows': 0}
-    if os.path.isfile(file_path):
-        file_extension = os.path.splitext(file_path)[1].lower()
-        if file_extension in ['.csv', '.txt']:
-            with open(file_path, 'rb') as f:
-                content_bytes = f.read()
-            detected = chardet.detect(content_bytes)
-            details['encoding'] = detected['encoding']
-            details['confidence'] = detected['confidence']
-            with open(file_path, 'r') as f:
-                dialect = csv.Sniffer().sniff(f.readline())
-                details['delimiter'] = dialect.delimiter
-                f.seek(0)
-                details['header'] = f.readline().strip()
-                details['rows'] = sum(1 for row in f)
-        elif file_extension in ['.xls', '.xlsx']:
-            with openpyxl.load_workbook(file_path, read_only=True) as wb:
-                details['encoding'] = wb.encoding
-                details['confidence'] = 1.0
-                header = None
-                for h in range(1, wb.active.max_column + 1):
-                    if header is None:
-                        header = wb.active.cell(1, h).value
-                    else:
-                        header = header + ';' + wb.active.cell(1, h).value
-                details['header'] = header
-                details['rows'] = wb.worksheets[0].max_row
-    return details
-
-
-def check_header(header, delimiter, header_valid):
+def get_header_check(header, delimiter, header_valid):
     list_valid = header_valid.lower().split(';')
     list_header = header.lower().split(delimiter)
     missing = []
@@ -144,8 +42,159 @@ def check_header(header, delimiter, header_valid):
         return 'OK'
 
 
-def main():
-    print(data_file_details('abcd.csv'))
+def get_details_file(file_path, header=None):
+    if header is None:
+        details = {'encoding': '', 'confidence': 0.0, 'delimiter': '', 'rows': 0, 'header': ''}
+    else:
+        details = {'encoding': '', 'confidence': 0.0, 'delimiter': '', 'rows': 0, 'header': '', 'check_header': ''}
+    if os.path.isfile(file_path):
+        file_extension = os.path.splitext(file_path)[1].lower()
+        if file_extension in ['.csv', '.txt']:
+            with open(file_path, 'rb') as f:
+                content_bytes = f.read()
+            detected = chardet.detect(content_bytes)
+            details['encoding'] = detected['encoding']
+            details['confidence'] = detected['confidence']
+            with open(file_path, 'r') as f:
+                dialect = csv.Sniffer().sniff(f.readline())
+                details['delimiter'] = dialect.delimiter
+                f.seek(0)
+                details['header'] = f.readline().strip()
+                details['rows'] = sum(1 for row in f)
+            if header is not None:
+                details['check_header'] = get_header_check(details['header'], details['delimiter'], header)
+        elif file_extension in ['.xls', '.xlsx']:
+            with openpyxl.load_workbook(file_path, read_only=True) as wb:
+                details['encoding'] = wb.encoding
+                details['confidence'] = 1.0
+                sh_header = None
+                for h in range(1, wb.active.max_column + 1):
+                    if sh_header is None:
+                        sh_header = wb.active.cell(1, h).value
+                    else:
+                        sh_header = sh_header + ';' + wb.active.cell(1, h).value
+                details['header'] = sh_header
+                details['rows'] = wb.worksheets[0].max_row
+            if header is not None:
+                details['check_header'] = get_header_check(details['header'], ';', header)
+    return details
+
+
+def get_data_file(file_path):
+    data_list_dict = []
+    if os.path.isfile(file_path):
+        file_extension = os.path.splitext(file_path)[1].lower()
+        if file_extension in ['.csv', '.txt']:
+            details = get_details_file(file_path)
+            with open(file_path, 'r', encoding=details['encoding']) as csv_reader:
+                reader = csv.reader(csv_reader, delimiter=details['delimiter'])
+                header = None
+                for row in reader:
+                    row_dict = {}
+                    if header is None:
+                        header = row
+                    else:
+                        for i in range(len(header)):
+                            row_dict[header[i]] = row[i]
+                        data_list_dict.append(row_dict)
+        elif file_extension in ['.xls', '.xlsx']:
+            wb_obj = openpyxl.load_workbook(file_path)
+            sh_obj = wb_obj.active
+            max_row = sh_obj.max_row
+            max_col = sh_obj.max_column
+            header = []
+            for r in range(1, max_row + 1):
+                row_dict = {}
+                for c in range(1, max_col + 1):
+                    cl_obj = sh_obj.cell(row=r, column=c)
+                    if r == 1:
+                        header.append(cl_obj.value)
+                    else:
+                        row_dict[header[c - 1]] = cl_obj.value
+                data_list_dict.append(row_dict)
+            wb_obj.close()
+    return data_list_dict
+
+
+def set_data_csv(file_path, data_list_dict, to_utf8=False):
+    if to_utf8:
+        if os.path.isfile(file_path):
+            details = get_details_file(file_path)
+            if details['confidence'] >= 0.8:
+                with open(file_path, 'rb') as f:
+                    content_bytes = f.read()
+                content_text = content_bytes.decode(details['encoding'])
+                with tempfile.NamedTemporaryFile('w', encoding='utf-8', newline='', dir=os.path.dirname(file_path), delete=False) as f:
+                    f.write(content_text)
+                os.replace(f.name, file_path)
+    else:
+        with open(file_path, 'w', encoding='utf-8', newline='') as csv_writer:
+            writer = csv.writer(csv_writer, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+            header = data_list_dict[0].keys()
+            writer.writerow(header)
+            for row in data_list_dict:
+                row_list = []
+                for head in header:
+                    row_list.append(row[head])
+                writer.writerow(row_list)
+
+
+def get_file_path(path, filename):
+    result = None
+    if os.path.isdir(path):
+        list_dir = os.listdir(path)
+        for item in list_dir:
+            if os.path.isdir(os.path.join(path, item)):
+                result = get_file_path(os.path.join(path, item), filename)
+                if result is not None:
+                    break
+            elif os.path.isfile(os.path.join(path, item)):
+                if item.strip().lower() == filename.strip().lower():
+                    result = os.path.join(path, item)
+                    break
+    return result
+
+
+def copy_file(file_path, path):
+    if os.path.isfile(file_path):
+        file_path_copy = os.path.join(path, os.path.basename(file_path))
+        if not os.path.isfile(file_path_copy):
+            if not os.path.isdir(path):
+                os.makedirs(path)
+            shutil.copyfile(file_path, file_path_copy)
+
+
+def main(argv):
+    file_list_files = None
+    field_name_file = None
+    path_to_copy = None
+    path_to_search = None
+    header_valid = None
+    try:
+        opts, args = getopt.getopt(argv, "h:i:c:p:s:v:", ['file_list_files', 'field_name_file', 'path_to_copy', 'path_to_search', 'header_valid'])
+    except getopt.GetoptError:
+        print('main.py -i <file_list_files> -c <field_name_file> -p <path_to_copy> -s <path_to_search> -v <header_valid>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('main.py -i <file_list_files> -c <field_name_file> -p <path_to_copy> -s <path_to_search> -v <header_valid>')
+            sys.exit()
+        elif opt in ('-i', '--file_list_files'):
+            file_input_files = arg
+        elif opt in ('-c', '--field_name_file'):
+            column_input_files = arg
+        elif opt in ('-p', '--path_to_copy'):
+            path_files = arg
+        elif opt in ('-s', '--path_to_search'):
+            path_search = arg
+        elif opt in ('-v', '--header_valid'):
+            header_valid = arg
+
+    print('Input file is', file_list_files)
+    print('Column file is', field_name_file)
+    print('Path to files is', path_to_copy)
+    print('Path to search is', path_to_search)
+    print('Header valid is', header_valid)
 #    path_to_search = r'C:\Users\fpx1vg\Desktop\BBDD'
 #    path_to_copy = r'C:\Users\fpx1vg\Desktop\BBDD 2020'
 #    csv_list_files = r'C:\Users\fpx1vg\Desktop\CARGAS_2020.csv'
@@ -187,4 +236,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
