@@ -266,31 +266,35 @@ def main():
         log.warning(f'No data on input file {infile}')
     counter = 1
     for row in in_list_dict:
-        if field in row.keys():
-            log.info(f'Searching file {counter}/{len(in_list_dict)} {row[field]}')
-            file_copy = get_file_path(copy, row[field])
-            if search is not None:
-                file_search = get_file_path(search, row[field])
-            if os.path.isfile(file_copy):
-                log.info(f'File already exists')
-                row.update({'log': 'file exists'})
-            elif os.path.isfile(file_search):
-                copy_file(file_search, copy)
-                log.info(f'File copied')
-                row.update({'log': 'file copied'})
+        try:
+            if field in row.keys():
+                log.info(f'Searching file {counter}/{len(in_list_dict)} {row[field]}')
+                file_copy = get_file_path(copy, row[field])
+                if search is not None:
+                    file_search = get_file_path(search, row[field])
+                if os.path.isfile(file_copy):
+                    log.info(f'File already exists')
+                    row.update({'log': 'file exists'})
+                elif os.path.isfile(file_search):
+                    copy_file(file_search, copy)
+                    log.info(f'File copied')
+                    row.update({'log': 'file copied'})
+                else:
+                    log.info(f'File not found')
+                    row.update({'log': 'file not found'})
+                row.update(get_details_file(file_copy, header))
             else:
-                log.info(f'File not found')
-                row.update({'log': 'file not found'})
-            row.update(get_details_file(file_copy, header))
-        else:
-            log.warning(f'Not found field {field} on in file {infile}')
-            break
-        if row['extension'] in ['.csv', '.txt'] and row['encoding'] not in ['utf-8', 'ascii']:
-            log.info(f'Convert encode file from {row["encoding"]} to utf-8')
-            set_data_csv(file_copy, to_utf8=True)
-            row.update(get_details_file(file_copy, header))
-            log.info(f'Converted to {row["encoding"]}')
-        counter = counter + 1
+                log.warning(f'Not found field {field} on in file {infile}')
+                break
+            if row['extension'] in ['.csv', '.txt'] and row['encoding'] not in ['utf-8', 'ascii']:
+                log.info(f'Convert encode file from {row["encoding"]} to utf-8')
+                set_data_csv(file_copy, to_utf8=True)
+                row.update(get_details_file(file_copy, header))
+                log.info(f'Converted to {row["encoding"]}')
+            counter = counter + 1
+        except Exception as e:
+            log.error(e.__str__())
+            pass
     set_data_csv(f'{os.path.splitext(infile)[0]}_result.csv', in_list_dict)
 
 
