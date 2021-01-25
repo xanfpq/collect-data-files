@@ -214,12 +214,12 @@ def usage():
     them into csv with a common utf-8 format.
     
     Usage:
-      python et-csv.py --help
-      python et-csv.py --version
-      python et-csv.py -i <infile> -f <field> -c <copy>
-      python et-csv.py -i <infile> -f <field> -c <copy> -s <search>
-      python et-csv.py -i <infile> -f <field> -c <copy> -H <header>
-      python et-csv.py -i <infile> -f <field> -c <copy> -s <search> -H <header>
+      python collect-data-files.py --help
+      python collect-data-files.py --version
+      python collect-data-files.py -i <infile> -f <field> -c <copy>
+      python collect-data-files.py -i <infile> -f <field> -c <copy> -s <search>
+      python collect-data-files.py -i <infile> -f <field> -c <copy> -H <header>
+      python collect-data-files.py -i <infile> -f <field> -c <copy> -s <search> -H <header>
     
     Mandatory arguments to long options are mandatory for short options too.
       -i, --input=STRING file path with the list of files

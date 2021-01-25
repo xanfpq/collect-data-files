@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/et-csv.iml" filepath="$PROJECT_DIR$/.idea/et-csv.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/collect-data-files.iml" filepath="$PROJECT_DIR$/.idea/collect-data-files.iml" />
     </modules>
   </component>
 </project>
