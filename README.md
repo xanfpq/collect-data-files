@@ -1,52 +1,39 @@
 # Collect data files
 
-Tool to search and collect a list of data files. Also, we can check header of files and encoding.
+![GitHub repo size](https://img.shields.io/github/repo-size/xanfpq/collect-data-files)
+![GitHub contributors](https://img.shields.io/github/contributors/xanfpq/collect-data-files)
+![GitHub stars](https://img.shields.io/github/stars/xanfpq/collect-data-files?style=social)
+![GitHub forks](https://img.shields.io/github/forks/xanfpq/collect-data-files?style=social)
+![Twitter Follow](https://img.shields.io/twitter/follow/xanfpq?style=social)
 
-# Collect data files
-
-![GitHub repo size](https://img.shields.io/github/repo-size/xanfpq/et-csv/et)
-![GitHub contributors](https://img.shields.io/github/contributors/scottydocs/README-template.md)
-![GitHub stars](https://img.shields.io/github/stars/scottydocs/README-template.md?style=social)
-![GitHub forks](https://img.shields.io/github/forks/scottydocs/README-template.md?style=social)
-
-Collect data files is a tool that allows collect data files.
+Collect data files is a tool that allows collect data files on the same directory.
 
 In process of collect several data files on same folder, we can check header and encoding of which one.
 
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
-<!--- These are just example requirements. Add, duplicate or remove as required --->
-* You have installed the latest version of `<coding_language/dependency/requirement_1>`
-* You have a `<Windows/Linux/Mac>` machine. State which OS is supported/which is not.
-* You have read `<guide/link/documentation_related_to_project>`.
+* You have installed the Python library to read/write Excel [openpyxl](https://openpyxl.readthedocs.io/en/stable/)
+* You have installed the universal character encoding detector [chardet](https://pypi.org/project/chardet/)
 
-## Installing <project_name>
+## Using Collect data files
 
-To install <project_name>, follow these steps:
-
-Linux and macOS:
-```
-<install_command>
-```
-
-Windows:
-```
-<install_command>
-```
-## Using <project_name>
-
-To use <project_name>, follow these steps:
+To use Collect data files, follow these steps:
 
 ```
-<usage_example>
+python collect-data-files.py -i <infile> -f <field> -c <copy> -s <search> -H <header>
 ```
 
-Add run commands and examples you think users will find useful. Provide an options reference for bonus points!
+Mandatory arguments to long options are mandatory for short options too.
+* -i, --input: file path with the list of files
+* -f, --field: name of field on the input file with list of files
+* -c, --copy: path destination to collect files
+* -s, --search: (optional) path to search files that not exists on path destination
+* -H, --header: (optional) header to validate with fields separated by ;
 
-## Contributing to <project_name>
-<!--- If your README is long or you have some specific process or steps you want contributors to follow, consider creating a separate CONTRIBUTING.md file--->
-To contribute to <project_name>, follow these steps:
+## Contributing to Collect data files
+
+To contribute to Collect data files, follow these steps:
 
 1. Fork this repository.
 2. Create a branch: `git checkout -b <branch_name>`.
@@ -56,21 +43,10 @@ To contribute to <project_name>, follow these steps:
 
 Alternatively see the GitHub documentation on [creating a pull request](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request).
 
-## Contributors
-
-Thanks to the following people who have contributed to this project:
-
-* [@scottydocs](https://github.com/scottydocs) 📖
-* [@cainwatson](https://github.com/cainwatson) 🐛
-* [@calchuchesta](https://github.com/calchuchesta) 🐛
-
-You might want to consider using something like the [All Contributors](https://github.com/all-contributors/all-contributors) specification and its [emoji key](https://allcontributors.org/docs/en/emoji-key).
-
 ## Contact
 
-If you want to contact me you can reach me at <your_email@address.com>.
+If you want to contact me you can reach me at [xanfpq@gmail.com](mailto:xanfpq@gmail.com).
 
 ## License
-<!--- If you're not sure which open license to use see https://choosealicense.com/--->
 
-This project uses the following license: [<license_name>](<link>).
+This project uses the following license: [GNU General Public License v2.0](https://github.com/xanfpq/collect-data-files/blob/master/LICENSE).
