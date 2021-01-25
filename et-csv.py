@@ -112,9 +112,27 @@ def get_data_file(file_path):
                         header.append(cl_obj.value)
                     else:
                         row_dict[header[c - 1]] = cl_obj.value
-                data_list_dict.append(row_dict)
+                if r != 1:
+                    data_list_dict.append(row_dict)
             wb_obj.close()
     return data_list_dict
+
+
+def check_file_writable(file_path):
+    writable = False
+    if os.path.exists(file_path):
+        if os.path.isfile(file_path):
+            writable = os.access(file_path, os.W_OK)
+            try:
+                open(file_path, "r+")
+            except IOError:
+                writable = False
+    else:
+        parent_dir = os.path.dirname(file_path)
+        if not parent_dir:
+            parent_dir = '.'
+        writable = os.access(parent_dir, os.W_OK)
+    return writable
 
 
 def set_data_csv(file_path, data_list_dict={}, to_utf8=False):
@@ -133,7 +151,12 @@ def set_data_csv(file_path, data_list_dict={}, to_utf8=False):
                     f.write(content_text)
                 os.replace(f.name, file_path)
     else:
-        with open(file_path, 'w', encoding='utf-8', newline='') as csv_writer:
+        file_path_name = file_path
+        counter = 1
+        while not check_file_writable(file_path_name):
+            file_path_name = f'{os.path.splitext(file_path)[0]}_{counter}.csv'
+            counter = counter + 1
+        with open(file_path_name, 'w', encoding='utf-8', newline='') as csv_writer:
             writer = csv.writer(csv_writer, delimiter=';', quoting=csv.QUOTE_MINIMAL)
             header = data_list_dict[0].keys()
             writer.writerow(header)
@@ -269,13 +292,14 @@ def main():
         try:
             if field in row.keys():
                 log.info(f'Searching file {counter}/{len(in_list_dict)} {row[field]}')
-                file_copy = get_file_path(copy, row[field])
+                file_copy = os.path.join(copy, row[field])
+                file_search = None
                 if search is not None:
                     file_search = get_file_path(search, row[field])
                 if os.path.isfile(file_copy):
                     log.info(f'File already exists')
                     row.update({'log': 'file exists'})
-                elif os.path.isfile(file_search):
+                elif file_search is not None:
                     copy_file(file_search, copy)
                     log.info(f'File copied')
                     row.update({'log': 'file copied'})
@@ -295,7 +319,8 @@ def main():
         except Exception as e:
             log.error(e.__str__())
             pass
-    set_data_csv(f'{os.path.splitext(infile)[0]}_result.csv', in_list_dict)
+    if len(in_list_dict) != 0:
+        set_data_csv(f'{os.path.splitext(infile)[0]}_result.csv', in_list_dict)
 
 
 if __name__ == '__main__':
